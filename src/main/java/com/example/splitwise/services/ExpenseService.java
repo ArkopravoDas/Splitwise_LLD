@@ -36,13 +36,7 @@ public class ExpenseService {
         Optional<Group> groupOptional = groupRepository.findById(createExpenseDto.getGroupId());
 
         // Create a corresponding expense object
-        Expense expense =  Expense.builder()
-                .name(createExpenseDto.getName())
-                .group(groupOptional.get())
-                .amount(createExpenseDto.getAmount())
-                .build();
 
-        Expense savedExpense = expenseRepository.save(expense);
 
         // Finds out who all paid
         List<UserExpense> paidByUserExpenses = new ArrayList<>();
@@ -50,11 +44,11 @@ public class ExpenseService {
             Long userId = entry.getKey();
             int amount = entry.getValue();
             User user = userRepository.findById(userId).get();
-            UserExpense userExpense = new UserExpense(savedExpense, user, amount);
+            UserExpense userExpense = new UserExpense(user, amount);
             paidByUserExpenses.add(userExpense);
         }
 
-        userExpenseRepository.saveAll(paidByUserExpenses);
+        List<UserExpense> paidByUsers = userExpenseRepository.saveAll(paidByUserExpenses);
 
         // Finds out who all owed
         List<UserExpense> owedByUserExpenses = new ArrayList<>();
@@ -62,14 +56,21 @@ public class ExpenseService {
             Long userId = entry.getKey();
             int amount = entry.getValue();
             User user = userRepository.findById(userId).get();
-            UserExpense userExpense = new UserExpense(savedExpense, user, -amount);
+            UserExpense userExpense = new UserExpense(user, -amount);
             owedByUserExpenses.add(userExpense);
         }
 
-        userExpenseRepository.saveAll(owedByUserExpenses);
+        List<UserExpense> owedByUsers = userExpenseRepository.saveAll(owedByUserExpenses);
 
         // Add entries to the DB.
+        Expense expense =  Expense.builder()
+                .name(createExpenseDto.getName())
+                .group(groupOptional.get())
+                .amount(createExpenseDto.getAmount())
+                .owedBy(owedByUsers)
+                .paidBy(paidByUsers)
+                .build();
 
-        return savedExpense;
+        return expenseRepository.save(expense);
     }
 }

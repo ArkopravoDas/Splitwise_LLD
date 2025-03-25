@@ -15,14 +15,15 @@ import lombok.Setter;
 @Table(name = "user_expense")
 @AllArgsConstructor
 @NoArgsConstructor
-public class UserExpense extends BaseModel {
-    @ManyToOne
-    @JoinColumn(name = "expense_id")
-    private Expense expense;
-
+public class UserExpense extends BaseModel implements  Comparable<UserExpense> {
     @ManyToOne
     @JoinColumn(name = "user_id")
     private User user;
 
     int amount;
+
+    @Override
+    public int compareTo(UserExpense userExpense) {
+        return Integer.compare(amount, userExpense.amount);
+    }
 }
